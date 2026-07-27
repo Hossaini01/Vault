@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>USDT Vault</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<style>
+:root {
+  --accent: #17c98d;
+  --accent2: #7c5cff;
+  --gold: #ffc94d;
+  --danger: #ff5c7c;
+  --text: #f4f6ff;
+  --text2: #b9c0e8;
+  --text3: #7d84b8;
+  --glass: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.13);
+  --border2: rgba(255,255,255,0.22);
+  --font: Arial, sans-serif;
+}
+[data-lang="fa"],[data-lang="ar"] { direction: rtl; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { color:var(--text); font-family:var(--font); min-height:100vh; overflow-x:hidden; }
+body {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(23,201,141,0.28), transparent 55%),
+    radial-gradient(circle at 90% 15%, rgba(124,92,255,0.24), transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(255,201,77,0.10), transparent 55%),
+    #070a1a;
+  background-attachment:fixed;
+  padding-bottom:92px;
+}
+.glass { background:var(--glass); backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%); border:1px solid var(--border); }
+.icon { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; }
+
+/* live pulse ring used instead of static emoji dots */
+.live-pulse { position:relative; display:inline-flex; }
+.live-pulse::after {
+  content:''; position:absolute; inset:-4px; border-radius:50%;
+  border:1.5px solid var(--accent); opacity:0; animation:pulseRing 2s ease-out infinite;
+}
+@keyframes pulseRing { 0%{opacity:.6; transform:scale(0.8)} 100%{opacity:0; transform:scale(1.6)} }
+
+/* TOPBAR */
+.topbar {
+  position:sticky; top:0; z-index:100;
+  background:rgba(7,10,26,0.65);
+  backdrop-filter:blur(22px) saturate(160%);
+  -webkit-backdrop-filter:blur(22px) saturate(160%);
+  padding:14px 18px 12px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.topbar-logo { font-size:19px; font-weight:900; letter-spacing:-0.5px; display:flex; align-items:center; gap:8px; }
+.topbar-logo .badge { width:28px; height:28px; border-radius:9px; background:linear-gradient(135deg,var(--accent),#0d8f66); display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(23,201,141,0.35); }
+.topbar-logo .badge .icon { width:16px; height:16px; stroke:#04140e; stroke-width:2.4; }
+.topbar-logo .brand { background:linear-gradient(135deg,#fff,var(--text2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.lang-btn { border-radius:12px; padding:7px 12px; font-size:13px; font-weight:700; color:var(--text2); cursor:pointer; display:flex; align-items:center; gap:6px; font-family:var(--font); }
+.back-btn { border-radius:12px; padding:7px 12px; font-size:13px; font-weight:700; color:var(--text2); cursor:pointer; display:flex; align-items:center; gap:6px; font-family:var(--font); border:1px solid var(--border); background:rgba(255,255,255,0.04); }
+
+/* COMPACT PROFILE CARD */
+.user-card {
+  margin:14px 16px 0; border-radius:24px; padding:19px;
+  position:relative; overflow:hidden;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(23,201,141,0.22), transparent 60%),
+    radial-gradient(circle at 0% 100%, rgba(124,92,255,0.18), transparent 55%),
+    linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+  border:1px solid var(--border2);
+  box-shadow:0 16px 40px rgba(0,0,0,0.32);
+}
+.user-card-top { display:flex; align-items:center; gap:14px; }
+.user-avatar {
+  width:52px; height:52px; border-radius:15px; border:1.5px solid var(--border2);
+  background:linear-gradient(135deg,var(--accent2),#4c33c9);
+  display:flex; align-items:center; justify-content:center;
+  font-size:21px; font-weight:800; color:#fff; flex-shrink:0; overflow:hidden;
+}
+.user-avatar img { width:100%; height:100%; object-fit:cover; }
+.user-name-block { flex:1; min-width:0; }
+.user-name { font-size:17px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.user-id { font-size:11px; color:var(--text3); margin-top:3px; }
+.balance-block { text-align:right; }
+.balance-amount { font-size:42px; font-weight:900; letter-spacing:-1px; font-family:Arial,sans-serif; line-height:1; background:linear-gradient(135deg,#fff,var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.balance-amount .unit { font-size:16px; font-weight:800; margin-left:4px; }
+.balance-label { font-size:10px; color:var(--text3); letter-spacing:.5px; text-transform:uppercase; font-weight:700; margin-top:4px; }
+.withdraw-open-btn {
+  width:100%; margin-top:16px; border-radius:15px; padding:14px;
+  background:linear-gradient(135deg,var(--accent2),#4c33c9); color:#fff;
+  font-size:14px; font-weight:800; cursor:pointer; border:none; font-family:var(--font);
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow:0 8px 22px rgba(124,92,255,0.3);
+}
+.withdraw-open-btn .icon { width:18px; height:18px; }
+
+/* SECTIONS */
+.section { display:none; }
+.section.active { display:block; animation:fadeIn .3s ease; }
+@keyframes fadeIn { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)} }
+.section-pad { padding:16px 16px 0; }
+.sec-header { font-size:16px; font-weight:800; color:var(--text); margin-bottom:14px; display:flex; align-items:center; gap:9px; }
+.sec-dot { width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+
+/* TICK CHECKLIST (Home) */
+.tick-item { border-radius:16px; padding:13px 15px; margin-bottom:9px; display:flex; align-items:center; gap:12px; }
+.tick-item.done { border-color:rgba(23,201,141,0.4); }
+.tick-circle { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--border2); }
+.tick-circle .icon { width:16px; height:16px; }
+.tick-item.done .tick-circle { background:linear-gradient(135deg,var(--accent),#0d8f66); border-color:transparent; }
+.tick-item.done .tick-circle .icon { stroke:#04140e; }
+.tick-info { flex:1; }
+.tick-name { font-size:13px; font-weight:800; color:var(--text); }
+.tick-reward { font-size:11px; color:var(--accent); font-weight:800; margin-top:2px; font-family:Arial,sans-serif; }
+.tick-btn { padding:7px 13px; border-radius:10px; font-size:11px; font-weight:800; cursor:pointer; border:none; font-family:var(--font); background:linear-gradient(135deg,var(--accent2),#4c33c9); color:#fff; }
+.tick-btn.done-btn { background:rgba(23,201,141,0.13); color:var(--accent); }
+
+/* Home tab items are shown larger than the Tasks tab list */
+#ticksList .tick-item { padding:19px 20px; border-radius:20px; margin-bottom:13px; gap:16px; }
+#ticksList .tick-circle { width:44px; height:44px; }
+#ticksList .tick-circle .icon { width:22px; height:22px; }
+#ticksList .tick-name { font-size:16px; }
+#ticksList .tick-reward { font-size:13px; margin-top:4px; }
+#ticksList .tick-btn { padding:10px 18px; font-size:13px; border-radius:12px; }
+
+/* ADS (Tasks tab) */
+.ads-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.stat-card { border-radius:16px; padding:14px 16px; }
+.stat-card-label { font-size:10px; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.stat-card-value { font-size:21px; font-weight:900; color:var(--text); margin-top:5px; font-family:Arial,sans-serif; }
+.stat-card-value.green { color:var(--accent); }
+
+/* WATCH AD — redesigned to feel more alive and rewarding */
+.ad-watch-card {
+  border-radius:28px; padding:0; margin-bottom:22px; position:relative; overflow:hidden;
+  cursor:pointer; transition:transform .13s ease, box-shadow .13s ease;
+  background:linear-gradient(135deg,#1a0e3a,#0d2416);
+  border:1px solid rgba(124,92,255,0.35);
+  box-shadow:0 16px 48px rgba(124,92,255,0.22), 0 0 0 0 rgba(23,201,141,0);
+}
+.ad-watch-card:active { transform:scale(0.968); box-shadow:0 6px 20px rgba(124,92,255,0.18); }
+.ad-watch-card::before {
+  content:''; position:absolute; inset:0; border-radius:28px;
+  background:linear-gradient(120deg, rgba(124,92,255,0.22), rgba(23,201,141,0.18), rgba(255,201,77,0.14));
+  background-size:300% 300%;
+  animation:gradientShift 5s ease infinite;
+  z-index:0;
+}
+@keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+.ad-watch-inner {
+  border-radius:28px; padding:20px 20px 16px;
+  position:relative; z-index:1;
+}
+.ad-watch-top { display:flex; align-items:center; gap:16px; position:relative; z-index:1; }
+.ad-play-btn {
+  width:68px; height:68px; border-radius:22px;
+  background:linear-gradient(135deg,var(--accent2),#4c33c9);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; position:relative;
+  box-shadow:0 10px 28px rgba(124,92,255,0.55);
+}
+.ad-play-btn::before {
+  content:''; position:absolute; inset:-7px; border-radius:26px;
+  border:2.5px solid rgba(124,92,255,0.5); opacity:0;
+  animation:playPulse 1.8s ease-out infinite;
+}
+.ad-play-btn::after {
+  content:''; position:absolute; inset:-14px; border-radius:32px;
+  border:2px solid rgba(23,201,141,0.3); opacity:0;
+  animation:playPulse 1.8s ease-out 0.4s infinite;
+}
+@keyframes playPulse { 0%{opacity:.7; transform:scale(0.88)} 100%{opacity:0; transform:scale(1.3)} }
+.ad-play-btn svg { width:28px; height:28px; fill:#fff; position:relative; z-index:1; margin-left:3px; }
+.ad-info { flex:1; }
+.ad-title { font-size:17px; font-weight:900; color:#fff; }
+.ad-desc { font-size:12px; color:var(--text3); margin-top:3px; }
+.ad-earn-badge {
+  background:linear-gradient(135deg,var(--gold),#ff9a3d);
+  color:#291800; font-size:16px; font-weight:900;
+  padding:10px 16px; border-radius:14px; white-space:nowrap;
+  font-family:Arial,sans-serif; box-shadow:0 8px 20px rgba(255,201,77,0.4);
+  flex-shrink:0;
+}
+/* Tap ripple */
+.ad-ripple {
+  position:absolute; border-radius:50%;
+  background:rgba(255,255,255,0.18);
+  transform:scale(0); animation:rippleOut .55s ease-out forwards;
+  pointer-events:none; z-index:2;
+}
+@keyframes rippleOut { to { transform:scale(4); opacity:0; } }
+.ad-progress-bar { background:rgba(255,255,255,0.08); border-radius:10px; height:9px; overflow:hidden; margin-top:16px; }
+.ad-progress-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition:width 0.5s ease; }
+.ad-progress-text { display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-top:7px; }
+/* big "WATCH & EARN" label below progress */
+.ad-cta {
+  margin-top:14px; border-radius:14px; padding:13px;
+  background:linear-gradient(135deg,rgba(23,201,141,0.18),rgba(124,92,255,0.18));
+  border:1px solid rgba(23,201,141,0.25);
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  font-size:13px; font-weight:800; color:var(--accent); letter-spacing:.5px;
+}
+
+/* Click feedback overlay shown the instant the ad card is tapped */
+.ad-watch-inner .tap-overlay {
+  position:absolute; inset:0; border-radius:28px;
+  background:rgba(12,17,48,0.88);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:2;
+}
+.ad-watch-inner .tap-overlay.show { opacity:1; }
+.tap-spinner { width:34px; height:34px; border-radius:50%; border:3px solid rgba(255,255,255,0.15); border-top-color:var(--accent2); animation:spinTap .7s linear infinite; }
+@keyframes spinTap { to{transform:rotate(360deg)} }
+.tap-overlay .tap-text { font-size:13px; font-weight:800; color:var(--text2); }
+.tap-overlay.success .tap-spinner { display:none; }
+.tap-overlay.success .tap-check { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#0d8f66); display:flex; align-items:center; justify-content:center; animation:popCheck .35s ease; }
+.tap-overlay.success .tap-check svg { width:20px; height:20px; stroke:#04140e; stroke-width:3; }
+@keyframes popCheck { from{transform:scale(0.4); opacity:0} to{transform:scale(1); opacity:1} }
+.tap-check { display:none; }
+
+/* REFERRAL */
+.invite-hero { border-radius:24px; padding:22px; margin-bottom:14px; text-align:center; background: radial-gradient(circle at 50% 0%, rgba(255,201,77,0.16), transparent 60%); }
+.invite-hero-icon { width:44px; height:44px; margin:0 auto 12px; }
+.invite-hero-icon .icon { width:100%; height:100%; stroke:var(--gold); }
+.invite-amount { font-size:32px; font-weight:900; color:var(--gold); font-family:Arial,sans-serif; }
+.invite-amount span { font-size:15px; font-weight:700; }
+.invite-desc { font-size:13px; color:var(--text2); margin-top:8px; line-height:1.5; }
+.invite-link-box { border-radius:16px; padding:13px 14px; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+.invite-link-text { flex:1; font-size:11px; color:var(--text2); word-break:break-all; font-family:monospace; direction:ltr; text-align:left; }
+.copy-btn { background:linear-gradient(135deg,var(--accent2),#4c33c9); color:#fff; border:none; border-radius:10px; padding:8px 14px; font-size:12px; font-weight:800; cursor:pointer; flex-shrink:0; }
+.share-btn { width:100%; background:linear-gradient(135deg,var(--gold),#ff9a3d); border:none; border-radius:16px; padding:15px; color:#291800; font-size:15px; font-weight:900; cursor:pointer; font-family:var(--font); margin-bottom:14px; box-shadow:0 12px 30px rgba(255,201,77,0.28); display:flex; align-items:center; justify-content:center; gap:9px; }
+.share-btn .icon { width:19px; height:19px; stroke:#291800; }
+.invite-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.invite-stat-card { border-radius:16px; padding:14px 16px; text-align:center; }
+.invite-stat-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; }
+.invite-stat-value { font-size:22px; font-weight:900; color:var(--accent2); margin-top:5px; font-family:Arial,sans-serif; }
+.invite-stat-value.gold { color:var(--gold); }
+
+/* WITHDRAW SCREEN */
+.withdraw-min-notice { border-radius:14px; padding:12px 15px; margin-bottom:14px; font-size:12px; color:var(--gold); font-weight:700; display:flex; align-items:center; gap:9px; background:rgba(255,201,77,0.08); border:1px solid rgba(255,201,77,0.25); }
+.withdraw-min-notice .icon { width:17px; height:17px; stroke:var(--gold); flex-shrink:0; }
+.withdraw-form { border-radius:24px; padding:20px; margin-bottom:14px; }
+.form-label { font-size:10px; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:7px; display:block; }
+.form-input { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:13px 14px; font-size:15px; color:var(--text); font-family:var(--font); margin-bottom:14px; outline:none; transition:border-color 0.2s; }
+.form-input:focus { border-color:var(--accent); }
+.form-hint { font-size:11px; color:var(--text3); margin-top:-10px; margin-bottom:14px; }
+.submit-btn { width:100%; background:linear-gradient(135deg,var(--accent2),#4c33c9); border:none; border-radius:16px; padding:16px; color:#fff; font-size:15px; font-weight:900; cursor:pointer; font-family:var(--font); box-shadow:0 12px 30px rgba(124,92,255,0.32); display:flex; align-items:center; justify-content:center; gap:9px; }
+.submit-btn .icon { width:18px; height:18px; stroke:#fff; }
+
+/* HISTORY */
+.history-item { border-radius:16px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+.history-amount { font-size:17px; font-weight:900; color:var(--text); font-family:Arial,sans-serif; }
+.history-date { font-size:11px; color:var(--text3); margin-top:3px; }
+.history-address { font-size:10px; color:var(--text2); margin-top:3px; font-family:monospace; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:ltr; }
+.status-badge { padding:5px 11px; border-radius:9px; font-size:11px; font-weight:800; white-space:nowrap; border:1px solid transparent; }
+.status-badge.completed { background:rgba(23,201,141,0.13); color:var(--accent); border-color:rgba(23,201,141,0.25); }
+.status-badge.pending { background:rgba(255,201,77,0.13); color:var(--gold); border-color:rgba(255,201,77,0.25); }
+.status-badge.rejected { background:rgba(255,92,124,0.13); color:var(--danger); border-color:rgba(255,92,124,0.25); }
+.empty-history { text-align:center; padding:34px 0; color:var(--text3); font-size:13px; }
+
+/* LANGUAGE MODAL */
+.modal-overlay { display:none; position:fixed; inset:0; z-index:999; background:rgba(3,5,14,0.6); backdrop-filter:blur(8px); align-items:flex-end; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:#0d1128; border:1px solid var(--border2); border-radius:28px 28px 0 0; width:100%; max-height:78vh; overflow-y:auto; padding:26px 20px 42px; box-shadow:0 -20px 60px rgba(0,0,0,0.5); animation:slideUp 0.3s ease; }
+@keyframes slideUp { from{transform:translateY(60px); opacity:0} to{transform:translateY(0); opacity:1} }
+.modal-title { font-size:19px; font-weight:800; text-align:center; margin-bottom:18px; color:var(--text); }
+.lang-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.lang-item { background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:12px 14px; cursor:pointer; display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:var(--text); }
+.lang-item.selected { border-color:var(--accent); background:rgba(23,201,141,0.10); color:var(--accent); }
+.lang-flag { font-size:22px; }
+
+/* AD MODAL (fallback if AdGram not loaded) */
+.ad-modal { display:none; position:fixed; inset:0; z-index:998; background:rgba(3,5,14,0.75); backdrop-filter:blur(10px); align-items:center; justify-content:center; }
+.ad-modal.open { display:flex; }
+.ad-modal-box { background:#0d1128; border:1px solid var(--border2); border-radius:26px; width:calc(100% - 32px); max-width:380px; padding:30px 24px; text-align:center; box-shadow:0 20px 70px rgba(0,0,0,0.5); animation:popIn 0.25s ease; }
+@keyframes popIn { from{transform:scale(0.85); opacity:0} to{transform:scale(1); opacity:1} }
+.ad-countdown { font-size:60px; font-weight:900; color:var(--accent2); line-height:1; font-family:Arial,sans-serif; }
+.ad-watching-title { font-size:17px; font-weight:800; color:var(--text); margin-top:10px; }
+.ad-watching-sub { font-size:12px; color:var(--text3); margin-top:6px; }
+.ad-modal-progress { background:rgba(255,255,255,0.07); border-radius:8px; height:8px; overflow:hidden; margin:18px 0 0; }
+.ad-modal-fill { height:100%; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition:width 1s linear; border-radius:8px; }
+
+/* WITHDRAW SUCCESS */
+.withdraw-success { border-radius:20px; padding:22px; text-align:center; display:none; margin-bottom:14px; border:1px solid rgba(23,201,141,0.3); background:rgba(23,201,141,0.06); }
+.withdraw-success.show { display:block; animation:popIn 0.3s ease; }
+
+/* TOAST */
+.toast { position:fixed; bottom:104px; left:50%; transform:translateX(-50%) translateY(20px); background:#0d1128; border:1px solid var(--border2); color:#fff; padding:12px 22px; border-radius:14px; font-size:13px; font-weight:700; opacity:0; transition:all 0.3s; z-index:9999; white-space:nowrap; box-shadow:0 10px 30px rgba(0,0,0,0.4); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* BOTTOM NAV */
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; z-index:200; background:rgba(7,10,26,0.75); backdrop-filter:blur(24px) saturate(160%); border-top:1px solid var(--border); display:flex; height:74px; }
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; gap:5px; }
+.nav-item .icon { width:21px; height:21px; opacity:.55; transition:all 0.2s; }
+.nav-item .nav-label { font-size:10px; font-weight:700; color:var(--text3); letter-spacing:.3px; }
+.nav-item.active .icon { opacity:1; stroke:var(--accent); transform:scale(1.1); }
+.nav-item.active .nav-label { color:var(--accent); }
+
+/* TASK GROUP DIVIDER */
+.task-group-title { font-size:12px; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; margin:6px 0 10px; }
+</style>
+</head>
+<body data-lang="en">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <span class="badge live-pulse"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span>
+    <span class="brand">USDT Vault</span>
+  </div>
+  <button class="lang-btn glass" onclick="openLangModal()">
+    <span id="langFlag">🇬🇧</span>
+    <span id="langCode">EN</span>
+  </button>
+</div>
+
+<!-- COMPACT PROFILE CARD (shown on Home) -->
+<div class="user-card" id="profileCard">
+  <div class="user-card-top">
+    <div class="user-avatar" id="userAvatar">👤</div>
+    <div class="user-name-block">
+      <div class="user-name" id="userName">Loading...</div>
+      <div class="user-id" id="userId">ID: —</div>
+    </div>
+    <div class="balance-block">
+      <div class="balance-amount"><span id="balanceNum">0.00</span><span class="unit">USDT</span></div>
+      <div class="balance-label">Balance</div>
+    </div>
+  </div>
+  <button class="withdraw-open-btn" onclick="openWithdraw()">
+    <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="14.5" r="1.4"/></svg>
+    <span data-i18n="withdraw">Withdraw</span>
+  </button>
+</div>
+
+<!-- HOME SECTION: tick checklist -->
+<div id="sec-home" class="section active section-pad">
+  <div class="sec-header"><span class="sec-dot live-pulse"></span><span data-i18n="quickTasks">Quick Check-ins</span></div>
+  <div id="ticksList"></div>
+</div>
+
+<!-- TASKS SECTION: Watch & Earn + channel/bot tasks -->
+<div id="sec-tasks" class="section section-pad">
+  <div class="sec-header"><span class="sec-dot live-pulse"></span><span data-i18n="watchAndEarn">Watch & Earn</span></div>
+  <div class="ads-stats">
+    <div class="stat-card glass">
+      <div class="stat-card-label" data-i18n="totalWatched">Total Watched</div>
+      <div class="stat-card-value" id="totalWatched">0</div>
+    </div>
+    <div class="stat-card glass">
+      <div class="stat-card-label" data-i18n="totalEarned">Total Earned</div>
+      <div class="stat-card-value green" id="totalEarned">0.00 USDT</div>
+    </div>
+  </div>
+  <div class="ad-watch-card" id="adWatchCard" onclick="watchAd(event)">
+    <div class="ad-watch-inner">
+      <div class="tap-overlay" id="tapOverlay">
+        <div class="tap-spinner"></div>
+        <div class="tap-check"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div class="tap-text" id="tapText">Loading ad...</div>
+      </div>
+      <div class="ad-watch-top">
+        <div class="ad-play-btn">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <div class="ad-info">
+          <div class="ad-title" data-i18n="watchAd">Watch Ad</div>
+          <div class="ad-desc" data-i18n="completeVideo">Complete video to earn instantly</div>
+        </div>
+        <div class="ad-earn-badge">+0.1 USDT</div>
+      </div>
+      <div class="ad-progress-bar">
+        <div class="ad-progress-fill" id="adProgressFill" style="width:0%"></div>
+      </div>
+      <div class="ad-progress-text">
+        <span id="adStatus" data-i18n="readyToEarn">Ready to earn</span>
+        <span id="adCounter">0 / 20 <span data-i18n="in24h">in 24h</span></span>
+      </div>
+      <div class="ad-cta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        TAP TO WATCH & EARN
+      </div>
+    </div>
+  </div>
+  <div id="adsDoneMsg" class="glass" style="display:none;border-radius:20px;padding:24px;text-align:center;margin-bottom:22px;">
+    <svg class="icon" viewBox="0 0 24 24" style="width:36px;height:36px;stroke:var(--accent);margin:0 auto 10px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+    <div style="font-size:15px;font-weight:800;color:var(--accent);margin-top:8px" data-i18n="allAdsDone">Daily limit reached!</div>
+    <div style="font-size:12px;color:var(--text3);margin-top:4px" id="adsResetText">Come back later for more USDT</div>
+  </div>
+
+  <div class="task-group-title" data-i18n="channelsAndBots">Channels & Bots</div>
+  <div id="tasksList"></div>
+</div>
+
+<!-- REFERRAL SECTION -->
+<div id="sec-referral" class="section section-pad">
+  <div class="sec-header"><span class="sec-dot live-pulse"></span><span data-i18n="inviteAndEarn">Invite & Earn</span></div>
+  <div class="invite-hero glass">
+    <div class="invite-hero-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    <div class="invite-amount">1.00 <span>USDT</span></div>
+    <div class="invite-desc" data-i18n="inviteDesc">Share your unique link and earn 1.00 USDT per friend who joins!</div>
+  </div>
+  <div class="form-label" data-i18n="yourInviteLink">YOUR INVITE LINK</div>
+  <div class="invite-link-box glass" style="margin-top:6px">
+    <div class="invite-link-text" id="inviteLinkText">https://t.me/USDT_Vault1Bot/usdt?startapp=...</div>
+    <button class="copy-btn" onclick="copyInviteLink()" data-i18n="copy">Copy</button>
+  </div>
+  <button class="share-btn" onclick="shareInvite()">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    <span data-i18n="shareWithFriends">Share with Friends</span>
+  </button>
+  <div class="invite-stats">
+    <div class="invite-stat-card glass">
+      <div class="invite-stat-label" data-i18n="friendsInvited">Friends Invited</div>
+      <div class="invite-stat-value" id="friendsCount">0</div>
+    </div>
+    <div class="invite-stat-card glass">
+      <div class="invite-stat-label" data-i18n="earnedFromInvites">Earned from Invites</div>
+      <div class="invite-stat-value gold" id="inviteEarned">0.00 USDT</div>
+    </div>
+  </div>
+</div>
+
+<!-- WITHDRAW SECTION -->
+<div id="sec-withdraw" class="section section-pad">
+  <button class="back-btn" style="margin-bottom:14px" onclick="closeWithdraw()">
+    <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    <span data-i18n="back">Back</span>
+  </button>
+  <div class="sec-header"><span class="sec-dot live-pulse"></span><span data-i18n="withdrawFunds">Withdraw Funds</span></div>
+  <div class="withdraw-min-notice">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span data-i18n="minWithdrawNote">Minimum 15 USDT required to withdraw</span>
+  </div>
+  <div class="withdraw-form glass">
+    <div class="form-label" data-i18n="amount">AMOUNT</div>
+    <input type="number" class="form-input" id="withdrawAmount" placeholder="e.g. 10.00" step="0.01" min="15">
+    <div class="form-hint">Available: <span id="availableBal">0.00</span> USDT &nbsp;·&nbsp; Min 15 USDT</div>
+    <div class="form-label" data-i18n="walletAddress">WALLET ADDRESS (USDT TRC20)</div>
+    <input type="text" class="form-input" id="withdrawAddress" placeholder="T...xyz" style="direction:ltr">
+    <button class="submit-btn" onclick="submitWithdraw()">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      <span data-i18n="submitWithdrawal">Submit Withdrawal Request</span>
+    </button>
+  </div>
+
+  <div class="withdraw-success" id="withdrawSuccess">
+    <svg class="icon" viewBox="0 0 24 24" style="width:34px;height:34px;stroke:var(--accent);margin:0 auto"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <div style="font-size:17px;font-weight:800;color:var(--accent);margin-top:8px" data-i18n="withdrawProcessing">Processing...</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6" id="withdrawDetail"></div>
+  </div>
+
+  <div class="sec-header" style="margin-top:8px">
+    <span class="sec-dot" style="background:var(--gold)"></span>
+    <span data-i18n="withdrawalHistory">Withdrawal History</span>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<!-- LANGUAGE MODAL -->
+<div class="modal-overlay" id="langModal" onclick="closeLangModal(event)">
+  <div class="modal-box">
+    <div class="modal-title" data-i18n="chooseLanguage">Choose Language</div>
+    <div class="lang-grid" id="langGrid"></div>
+  </div>
+</div>
+
+<!-- AD MODAL (fallback) -->
+<div class="ad-modal" id="adModal">
+  <div class="ad-modal-box">
+    <div class="ad-countdown" id="adCountdown">5</div>
+    <div class="ad-watching-title" data-i18n="watchingAd">Watching Ad...</div>
+    <div class="ad-watching-sub" data-i18n="dontClose">Don't close — earn 0.1 USDT on completion</div>
+    <div class="ad-modal-progress">
+      <div class="ad-modal-fill" id="adModalFill" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="switchTab('home')" id="nav-home">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/><path d="M5 10v10a1 1 0 0 0 1 1h3"/><path d="M19 10v10a1 1 0 0 1-1 1h-3"/></svg>
+    <div class="nav-label" data-i18n="home">HOME</div>
+  </div>
+  <div class="nav-item" onclick="switchTab('tasks')" id="nav-tasks">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <div class="nav-label" data-i18n="tasks">TASKS</div>
+  </div>
+  <div class="nav-item" onclick="switchTab('referral')" id="nav-referral">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <div class="nav-label" data-i18n="referral">REFERRAL</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== TRANSLATIONS (10 languages) ======
+const TR = {
+  en:{ home:"Home",tasks:"Tasks",referral:"Referral",withdraw:"Withdraw",back:"Back",
+    quickTasks:"Quick Check-ins",channelsAndBots:"Channels & Bots",
+    watchAndEarn:"Watch & Earn",totalWatched:"Total Watched",totalEarned:"Total Earned",
+    watchAd:"Watch Ad",completeVideo:"Complete video to earn instantly",readyToEarn:"Ready to earn",in24h:"in 24h",
+    allAdsDone:"Daily limit reached!",inviteAndEarn:"Invite & Earn",
+    inviteDesc:"Share your unique link and earn 1.00 USDT per friend who joins!",
+    yourInviteLink:"YOUR INVITE LINK",copy:"Copy",shareWithFriends:"Share with Friends",
+    friendsInvited:"Friends Invited",earnedFromInvites:"Earned from Invites",
+    withdrawFunds:"Withdraw Funds",minWithdrawNote:"Minimum 15 USDT required to withdraw",
+    amount:"AMOUNT",walletAddress:"WALLET ADDRESS",submitWithdrawal:"Submit Withdrawal Request",
+    withdrawProcessing:"Processing...",withdrawalHistory:"Withdrawal History",chooseLanguage:"Choose Language",
+    watchingAd:"Watching Ad...",dontClose:"Don't close — earn 0.1 USDT on completion",
+    taskGo:"Go →",taskDone:"✓ Done",completed:"Completed",pending:"Pending",
+    copied:"Copied! ✓",withdrawSubmitted:"Withdrawal request submitted!",
+    insufficientBalance:"Insufficient balance!",enterAmount:"Please enter amount",
+    enterAddress:"Please enter wallet address",minAmount:"Minimum withdrawal is 15 USDT" },
+  fa:{ home:"خانه",tasks:"تسک‌ها",referral:"دعوت",withdraw:"برداشت",back:"بازگشت",
+    quickTasks:"چک‌این سریع",channelsAndBots:"کانال‌ها و ربات‌ها",
+    watchAndEarn:"تماشا کن و کسب کن",totalWatched:"کل تماشا شده",totalEarned:"کل درآمد",
+    watchAd:"تماشای تبلیغ",completeVideo:"ویدیو را کامل تماشا کن و فوری کسب کن",readyToEarn:"آماده برای کسب درآمد",in24h:"در ۲۴ ساعت",
+    allAdsDone:"سقف امروز پر شد!",inviteAndEarn:"دعوت کن و کسب کن",
+    inviteDesc:"لینک خود را به اشتراک بگذار و برای هر دوست ۱.۰۰ USDT کسب کن!",
+    yourInviteLink:"لینک دعوت شما",copy:"کپی",shareWithFriends:"اشتراک‌گذاری با دوستان",
+    friendsInvited:"دوستان دعوت شده",earnedFromInvites:"درآمد از دعوت‌ها",
+    withdrawFunds:"برداشت وجه",minWithdrawNote:"حداقل ۱۵ USDT برای برداشت لازم است",
+    amount:"مقدار",walletAddress:"آدرس کیف پول",submitWithdrawal:"ارسال درخواست برداشت",
+    withdrawProcessing:"در حال پردازش...",withdrawalHistory:"تاریخچه برداشت",chooseLanguage:"انتخاب زبان",
+    watchingAd:"در حال تماشای تبلیغ...",dontClose:"نبند — با تکمیل ۰.۱ USDT دریافت می‌کنی",
+    taskGo:"برو →",taskDone:"✓ انجام شد",completed:"تکمیل شد",pending:"در انتظار",
+    copied:"کپی شد! ✓",withdrawSubmitted:"درخواست برداشت ارسال شد!",
+    insufficientBalance:"موجودی کافی نیست!",enterAmount:"لطفاً مقدار را وارد کنید",
+    enterAddress:"لطفاً آدرس کیف پول را وارد کنید",minAmount:"حداقل برداشت ۱۵ USDT است" },
+  ar:{ home:"الرئيسية",tasks:"المهام",referral:"دعوة",withdraw:"سحب",back:"رجوع",
+    quickTasks:"تسجيل سريع",channelsAndBots:"القنوات والبوتات",
+    watchAndEarn:"شاهد واكسب",totalWatched:"إجمالي المشاهدات",totalEarned:"إجمالي المكسوب",
+    watchAd:"مشاهدة إعلان",completeVideo:"أكمل الفيديو لتربح فوراً",readyToEarn:"جاهز للربح",in24h:"خلال 24 ساعة",
+    allAdsDone:"تم الوصول للحد اليومي!",inviteAndEarn:"ادعُ واكسب",
+    inviteDesc:"شارك رابطك واكسب 1.00 USDT لكل صديق ينضم!",
+    yourInviteLink:"رابط الدعوة",copy:"نسخ",shareWithFriends:"مشاركة مع الأصدقاء",
+    friendsInvited:"الأصدقاء المدعوون",earnedFromInvites:"المكسوب من الدعوات",
+    withdrawFunds:"سحب الأموال",minWithdrawNote:"الحد الأدنى 15 USDT للسحب",
+    amount:"المبلغ",walletAddress:"عنوان المحفظة",submitWithdrawal:"إرسال طلب السحب",
+    withdrawProcessing:"جار المعالجة...",withdrawalHistory:"سجل السحوبات",chooseLanguage:"اختر اللغة",
+    watchingAd:"مشاهدة الإعلان...",dontClose:"لا تغلق — اكسب 0.1 USDT",
+    taskGo:"اذهب →",taskDone:"✓ تم",completed:"مكتمل",pending:"معلق",
+    copied:"تم النسخ! ✓",withdrawSubmitted:"تم إرسال طلب السحب!",
+    insufficientBalance:"رصيد غير كافٍ!",enterAmount:"الرجاء إدخال المبلغ",
+    enterAddress:"الرجاء إدخال عنوان المحفظة",minAmount:"الحد الأدنى للسحب 15 USDT" },
+  ru:{ home:"Главная",tasks:"Задания",referral:"Рефералы",withdraw:"Вывод",back:"Назад",
+    quickTasks:"Быстрые чек-ины",channelsAndBots:"Каналы и боты",
+    watchAndEarn:"Смотри и зарабатывай",totalWatched:"Всего просмотрено",totalEarned:"Всего заработано",
+    watchAd:"Смотреть рекламу",completeVideo:"Досмотри видео и заработай мгновенно",readyToEarn:"Готово к заработку",in24h:"за 24 часа",
+    allAdsDone:"Дневной лимит достигнут!",inviteAndEarn:"Приглашай и зарабатывай",
+    inviteDesc:"Поделись ссылкой и зарабатывай 1.00 USDT за каждого друга!",
+    yourInviteLink:"ТВОЯ ССЫЛКА",copy:"Копировать",shareWithFriends:"Поделиться с друзьями",
+    friendsInvited:"Приглашено друзей",earnedFromInvites:"Заработано с приглашений",
+    withdrawFunds:"Вывод средств",minWithdrawNote:"Минимум 15 USDT для вывода",
+    amount:"СУММА",walletAddress:"АДРЕС КОШЕЛЬКА",submitWithdrawal:"Отправить запрос на вывод",
+    withdrawProcessing:"Обработка...",withdrawalHistory:"История выводов",chooseLanguage:"Выберите язык",
+    watchingAd:"Просмотр рекламы...",dontClose:"Не закрывай — заработай 0.1 USDT",
+    taskGo:"Перейти →",taskDone:"✓ Готово",completed:"Выполнено",pending:"Ожидание",
+    copied:"Скопировано! ✓",withdrawSubmitted:"Запрос на вывод отправлен!",
+    insufficientBalance:"Недостаточно средств!",enterAmount:"Введите сумму",
+    enterAddress:"Введите адрес кошелька",minAmount:"Минимальный вывод 15 USDT" },
+  tr:{ home:"Ana Sayfa",tasks:"Görevler",referral:"Davet",withdraw:"Çekim",back:"Geri",
+    quickTasks:"Hızlı Kontroller",channelsAndBots:"Kanallar ve Botlar",
+    watchAndEarn:"İzle ve Kazan",totalWatched:"Toplam İzlenen",totalEarned:"Toplam Kazanılan",
+    watchAd:"Reklam İzle",completeVideo:"Videoyu tamamla ve anında kazan",readyToEarn:"Kazanmaya hazır",in24h:"24 saatte",
+    allAdsDone:"Günlük limit doldu!",inviteAndEarn:"Davet Et ve Kazan",
+    inviteDesc:"Bağlantını paylaş, her arkadaş için 1.00 USDT kazan!",
+    yourInviteLink:"DAVET BAĞLANTINIZ",copy:"Kopyala",shareWithFriends:"Arkadaşlarla Paylaş",
+    friendsInvited:"Davet Edilen Arkadaşlar",earnedFromInvites:"Davetlerden Kazanılan",
+    withdrawFunds:"Para Çekme",minWithdrawNote:"Minimum 15 USDT gerekli",
+    amount:"MİKTAR",walletAddress:"CÜZDAN ADRESİ",submitWithdrawal:"Çekim Talebi Gönder",
+    withdrawProcessing:"İşleniyor...",withdrawalHistory:"Çekim Geçmişi",chooseLanguage:"Dil Seçin",
+    watchingAd:"Reklam İzleniyor...",dontClose:"Kapatma — 0.1 USDT kazan",
+    taskGo:"Git →",taskDone:"✓ Tamam",completed:"Tamamlandı",pending:"Beklemede",
+    copied:"Kopyalandı! ✓",withdrawSubmitted:"Çekim talebi gönderildi!",
+    insufficientBalance:"Yetersiz bakiye!",enterAmount:"Lütfen miktar girin",
+    enterAddress:"Lütfen cüzdan adresi girin",minAmount:"Minimum çekim 15 USDT" },
+  hi:{ home:"होम",tasks:"कार्य",referral:"आमंत्रण",withdraw:"निकासी",back:"वापस",
+    quickTasks:"त्वरित चेक-इन",channelsAndBots:"चैनल और बॉट",
+    watchAndEarn:"देखो और कमाओ",totalWatched:"कुल देखा",totalEarned:"कुल कमाई",
+    watchAd:"विज्ञापन देखें",completeVideo:"तुरंत कमाने के लिए वीडियो पूरा करें",readyToEarn:"कमाने के लिए तैयार",in24h:"24 घंटे में",
+    allAdsDone:"दैनिक सीमा पूरी हुई!",inviteAndEarn:"आमंत्रित करो और कमाओ",
+    inviteDesc:"लिंक शेयर करें, हर मित्र के लिए 1.00 USDT कमाएं!",
+    yourInviteLink:"आपका आमंत्रण लिंक",copy:"कॉपी",shareWithFriends:"मित्रों के साथ शेयर करें",
+    friendsInvited:"आमंत्रित मित्र",earnedFromInvites:"आमंत्रणों से कमाई",
+    withdrawFunds:"निकासी",minWithdrawNote:"न्यूनतम 15 USDT निकासी के लिए",
+    amount:"राशि",walletAddress:"वॉलेट पता",submitWithdrawal:"निकासी अनुरोध जमा करें",
+    withdrawProcessing:"प्रोसेसिंग...",withdrawalHistory:"निकासी इतिहास",chooseLanguage:"भाषा चुनें",
+    watchingAd:"विज्ञापन देख रहे हैं...",dontClose:"बंद न करें — 0.1 USDT कमाएं",
+    taskGo:"जाएं →",taskDone:"✓ हो गया",completed:"पूर्ण",pending:"प्रतीक्षारत",
+    copied:"कॉपी हो गया! ✓",withdrawSubmitted:"निकासी अनुरोध जमा हो गया!",
+    insufficientBalance:"अपर्याप्त शेष!",enterAmount:"कृपया राशि दर्ज करें",
+    enterAddress:"कृपया वॉलेट पता दर्ज करें",minAmount:"न्यूनतम निकासी 15 USDT है" },
+  zh:{ home:"首页",tasks:"任务",referral:"邀请",withdraw:"提现",back:"返回",
+    quickTasks:"快速签到",channelsAndBots:"频道与机器人",
+    watchAndEarn:"看广告赚钱",totalWatched:"总观看数",totalEarned:"总收益",
+    watchAd:"观看广告",completeVideo:"完成视频即时获得奖励",readyToEarn:"准备赚钱",in24h:"24小时内",
+    allAdsDone:"已达每日上限！",inviteAndEarn:"邀请赚钱",
+    inviteDesc:"分享您的链接，每邀请一位朋友获得1.00 USDT！",
+    yourInviteLink:"您的邀请链接",copy:"复制",shareWithFriends:"与朋友分享",
+    friendsInvited:"已邀请好友",earnedFromInvites:"邀请收益",
+    withdrawFunds:"提现",minWithdrawNote:"最低提现 15 USDT",
+    amount:"金额",walletAddress:"钱包地址",submitWithdrawal:"提交提现请求",
+    withdrawProcessing:"处理中...",withdrawalHistory:"提现历史",chooseLanguage:"选择语言",
+    watchingAd:"正在观看广告...",dontClose:"请勿关闭 — 完成后获得0.1 USDT",
+    taskGo:"前往 →",taskDone:"✓ 完成",completed:"已完成",pending:"待处理",
+    copied:"已复制！✓",withdrawSubmitted:"提现请求已提交！",
+    insufficientBalance:"余额不足！",enterAmount:"请输入金额",
+    enterAddress:"请输入钱包地址",minAmount:"最低提现15 USDT" },
+  es:{ home:"Inicio",tasks:"Tareas",referral:"Invitar",withdraw:"Retirar",back:"Atrás",
+    quickTasks:"Registros Rápidos",channelsAndBots:"Canales y Bots",
+    watchAndEarn:"Mira y Gana",totalWatched:"Total Visto",totalEarned:"Total Ganado",
+    watchAd:"Ver Anuncio",completeVideo:"Completa el video y gana al instante",readyToEarn:"Listo para ganar",in24h:"en 24h",
+    allAdsDone:"¡Límite diario alcanzado!",inviteAndEarn:"Invita y Gana",
+    inviteDesc:"Comparte tu enlace y gana 1.00 USDT por cada amigo!",
+    yourInviteLink:"TU ENLACE DE INVITACIÓN",copy:"Copiar",shareWithFriends:"Compartir con Amigos",
+    friendsInvited:"Amigos Invitados",earnedFromInvites:"Ganado por Invitaciones",
+    withdrawFunds:"Retirar Fondos",minWithdrawNote:"Mínimo 15 USDT para retirar",
+    amount:"CANTIDAD",walletAddress:"DIRECCIÓN DE BILLETERA",submitWithdrawal:"Enviar Solicitud de Retiro",
+    withdrawProcessing:"Procesando...",withdrawalHistory:"Historial de Retiros",chooseLanguage:"Elegir Idioma",
+    watchingAd:"Viendo Anuncio...",dontClose:"No cierres — gana 0.1 USDT",
+    taskGo:"Ir →",taskDone:"✓ Hecho",completed:"Completado",pending:"Pendiente",
+    copied:"¡Copiado! ✓",withdrawSubmitted:"¡Solicitud enviada!",
+    insufficientBalance:"¡Saldo insuficiente!",enterAmount:"Por favor ingresa el monto",
+    enterAddress:"Por favor ingresa la dirección",minAmount:"El retiro mínimo es 15 USDT" },
+  fr:{ home:"Accueil",tasks:"Tâches",referral:"Inviter",withdraw:"Retirer",back:"Retour",
+    quickTasks:"Vérifications Rapides",channelsAndBots:"Chaînes et Bots",
+    watchAndEarn:"Regardez et Gagnez",totalWatched:"Total Vu",totalEarned:"Total Gagné",
+    watchAd:"Voir une Annonce",completeVideo:"Complétez la vidéo pour gagner",readyToEarn:"Prêt à gagner",in24h:"en 24h",
+    allAdsDone:"Limite quotidienne atteinte !",inviteAndEarn:"Invitez et Gagnez",
+    inviteDesc:"Partagez votre lien et gagnez 1.00 USDT par ami!",
+    yourInviteLink:"VOTRE LIEN D'INVITATION",copy:"Copier",shareWithFriends:"Partager avec des Amis",
+    friendsInvited:"Amis Invités",earnedFromInvites:"Gagné des Invitations",
+    withdrawFunds:"Retirer des Fonds",minWithdrawNote:"Minimum 15 USDT requis",
+    amount:"MONTANT",walletAddress:"ADRESSE DU PORTEFEUILLE",submitWithdrawal:"Envoyer la Demande de Retrait",
+    withdrawProcessing:"En traitement...",withdrawalHistory:"Historique des Retraits",chooseLanguage:"Choisir la Langue",
+    watchingAd:"Visionnage...",dontClose:"Ne fermez pas — gagnez 0.1 USDT",
+    taskGo:"Aller →",taskDone:"✓ Fait",completed:"Terminé",pending:"En attente",
+    copied:"Copié! ✓",withdrawSubmitted:"Demande soumise!",
+    insufficientBalance:"Solde insuffisant!",enterAmount:"Veuillez entrer le montant",
+    enterAddress:"Veuillez entrer l'adresse",minAmount:"Le retrait minimum est 15 USDT" },
+  de:{ home:"Start",tasks:"Aufgaben",referral:"Einladen",withdraw:"Abheben",back:"Zurück",
+    quickTasks:"Schnell-Check-ins",channelsAndBots:"Kanäle und Bots",
+    watchAndEarn:"Anschauen und Verdienen",totalWatched:"Gesamt Angesehen",totalEarned:"Gesamt Verdient",
+    watchAd:"Werbung Anschauen",completeVideo:"Video abschließen und sofort verdienen",readyToEarn:"Bereit zum Verdienen",in24h:"in 24 Std",
+    allAdsDone:"Tageslimit erreicht!",inviteAndEarn:"Einladen und Verdienen",
+    inviteDesc:"Teile deinen Link und verdiene 1.00 USDT für jeden Freund!",
+    yourInviteLink:"DEIN EINLADUNGSLINK",copy:"Kopieren",shareWithFriends:"Mit Freunden teilen",
+    friendsInvited:"Eingeladene Freunde",earnedFromInvites:"Durch Einladungen verdient",
+    withdrawFunds:"Geld Abheben",minWithdrawNote:"Minimum 15 USDT zum Abheben",
+    amount:"BETRAG",walletAddress:"WALLET-ADRESSE",submitWithdrawal:"Auszahlungsanfrage senden",
+    withdrawProcessing:"Verarbeitung...",withdrawalHistory:"Auszahlungshistorie",chooseLanguage:"Sprache wählen",
+    watchingAd:"Werbung ansehen...",dontClose:"Nicht schließen — 0.1 USDT verdienen",
+    taskGo:"Gehen →",taskDone:"✓ Fertig",completed:"Abgeschlossen",pending:"Ausstehend",
+    copied:"Kopiert! ✓",withdrawSubmitted:"Anfrage eingereicht!",
+    insufficientBalance:"Unzureichendes Guthaben!",enterAmount:"Bitte Betrag eingeben",
+    enterAddress:"Bitte Wallet-Adresse eingeben",minAmount:"Mindestabhebung 15 USDT" },
+};
+
+const LANGUAGES = [
+  {code:'en',name:'English',flag:'🇬🇧',dir:'ltr'},
+  {code:'fa',name:'فارسی',flag:'🇮🇷',dir:'rtl'},
+  {code:'ar',name:'العربية',flag:'🇸🇦',dir:'rtl'},
+  {code:'ru',name:'Русский',flag:'🇷🇺',dir:'ltr'},
+  {code:'tr',name:'Türkçe',flag:'🇹🇷',dir:'ltr'},
+  {code:'hi',name:'हिन्दी',flag:'🇮🇳',dir:'ltr'},
+  {code:'zh',name:'中文',flag:'🇨🇳',dir:'ltr'},
+  {code:'es',name:'Español',flag:'🇪🇸',dir:'ltr'},
+  {code:'fr',name:'Français',flag:'🇫🇷',dir:'ltr'},
+  {code:'de',name:'Deutsch',flag:'🇩🇪',dir:'ltr'},
+];
+
+// Quick check-in tasks shown on Home as ticks
+const HOME_TICKS = [
+  {id:'h1',name:'Daily Check-in',reward:0.05},
+  {id:'h2',name:'Rate the App',reward:0.05},
+];
+
+// Channel-join / bot-start tasks shown in Tasks tab below Watch & Earn
+const TASKS_DATA = [
+  {id:'t1',type:'channel',name:'USDT Vault Channel',link:'https://t.me/XIONRO',reward:0.2},
+  {id:'t2',type:'channel',name:'Beast Hack',link:'https://t.me/Beast_Hac1k',reward:0.2},
+  {id:'t3',type:'channel',name:'Money Plus',link:'https://t.me/Money_Plus12',reward:0.2},
+  {id:'t4',type:'bot',name:'Money Plus Bot',link:'https://t.me/Money_Plus12_Bot/moneyplus?startapp=6423335359',reward:0.2},
+  {id:'t5',type:'bot',name:'Cash Plus Bot',link:'https://t.me/CashPlus_Bot/cashplus?startapp=5206091997',reward:0.2},
+];
+
+function iconFor(type){
+  if(type==='channel') return '<svg class="icon" viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>';
+  if(type==='bot') return '<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><circle cx="8.5" cy="14" r="1.2"/><circle cx="15.5" cy="14" r="1.2"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/></svg>';
+  return '<svg class="icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>';
+}
+
+// ====== STATE ======
+let S = {
+  lang:'en', balance:0,
+  adsWatched24h:0, adsWindowStart:0, totalWatched:0, totalEarned:0,
+  friendsCount:0, inviteEarned:0,
+  tasks:{}, homeTicks:{},
+  history:[], userId:null, userName:null, userPhoto:null,
+};
+
+function getStorageKey(){ return 'urh_' + (S.userId||'guest'); }
+function loadS(){
+  try{
+    const tmp = localStorage.getItem('urh2_state');
+    if(tmp){ const d=JSON.parse(tmp); S.userId=d.userId||null; S.userName=d.userName||null; S.userPhoto=d.userPhoto||null; S.lang=d.lang||'en'; }
+  }catch(e){}
+}
+function loadUserS(){
+  try{
+    const d=localStorage.getItem(getStorageKey());
+    if(d) S={...S,...JSON.parse(d)};
+  }catch(e){}
+}
+function saveS(){
+  try{ localStorage.setItem(getStorageKey(),JSON.stringify(S)); }catch(e){}
+  syncUserProfile();
+}
+
+function syncUserProfile(){
+  try{
+    if(!S.userId) return;
+    fetch(`${FIREBASE_DB}/members/${S.userId}.json`, {
+      method:'PUT',
+      body: JSON.stringify({
+        userId: String(S.userId),
+        name: S.userName || 'Vault User',
+        photo: S.userPhoto || null,
+        lang: S.lang,
+        balance: S.balance,
+        adsWatched24h: S.adsWatched24h,
+        totalWatched: S.totalWatched,
+        totalEarned: S.totalEarned,
+        friendsCount: S.friendsCount,
+        inviteEarned: S.inviteEarned,
+        tasksDone: Object.values(S.tasks||{}).filter(Boolean).length,
+        lastActive: Date.now()
+      })
+    }).catch(()=>{});
+  }catch(e){}
+}
+
+function t(k){ return (TR[S.lang]||TR.en)[k]||(TR.en)[k]||k; }
+
+// ====== INIT ======
+window.Telegram?.WebApp?.ready();
+window.Telegram?.WebApp?.expand();
+
+function init(){
+  loadS();
+
+  const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if(tgU){
+    S.userId = tgU.id;
+    S.userName = tgU.first_name + (tgU.last_name?' '+tgU.last_name:'');
+    S.userPhoto = tgU.photo_url||null;
+  } else {
+    if(!S.userId) S.userId = Math.floor(Math.random()*9000000+1000000);
+    if(!S.userName) S.userName = 'Vault User';
+  }
+
+  loadUserS();
+
+  if(tgU){
+    S.userId = tgU.id;
+    S.userName = tgU.first_name + (tgU.last_name?' '+tgU.last_name:'');
+    S.userPhoto = tgU.photo_url||null;
+  }
+
+  if(!S.adsWindowStart || Date.now() - S.adsWindowStart >= 24*60*60*1000){
+    S.adsWatched24h = 0;
+    S.adsWindowStart = Date.now();
+  }
+
+  checkReferral();
+
+  saveS();
+  applyLang(S.lang);
+  renderAll();
+  initAdGram();
+  syncReferralCredits();
+  syncWithdrawalStatuses();
+}
+
+function checkReferral(){
+  try{
+    const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+    if(startParam && startParam !== String(S.userId)){
+      if(!S.referralPushed){
+        S.referredBy = startParam;
+        saveS();
+        pushReferralEvent(startParam, S.userId).then(ok=>{
+          if(ok){ S.referralPushed = true; saveS(); }
+        });
+      }
+    }
+  }catch(e){}
+}
+
+function renderAll(){
+  renderUserCard();
+  renderLangModal();
+  renderTicks();
+  renderTasks();
+  renderAds();
+  renderInvite();
+  renderWithdraw();
+  applyI18n();
+}
+
+// ====== USER CARD ======
+function renderUserCard(){
+  document.getElementById('userName').textContent = S.userName||'Vault User';
+  document.getElementById('userId').textContent = 'ID: '+(S.userId||'—');
+  document.getElementById('balanceNum').textContent = S.balance.toFixed(2);
+  document.getElementById('availableBal').textContent = S.balance.toFixed(2);
+  const av = document.getElementById('userAvatar');
+  if(S.userPhoto){
+    av.innerHTML = `<img src="${S.userPhoto}" alt="">`;
+  } else {
+    av.textContent = (S.userName||'U').charAt(0).toUpperCase();
+  }
+}
+
+// ====== LANG ======
+function applyLang(lang){
+  S.lang = lang;
+  const ld = LANGUAGES.find(l=>l.code===lang)||LANGUAGES[0];
+  document.body.setAttribute('data-lang',lang);
+  document.documentElement.setAttribute('dir',ld.dir);
+  document.getElementById('langFlag').textContent = ld.flag;
+  document.getElementById('langCode').textContent = lang.toUpperCase();
+  applyI18n();
+  renderTicks();
+  renderTasks();
+  renderAds();
+  saveS();
+}
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  renderAds();
+}
+function openLangModal(){ document.getElementById('langModal').classList.add('open'); }
+function closeLangModal(e){ if(e.target===document.getElementById('langModal')) document.getElementById('langModal').classList.remove('open'); }
+function renderLangModal(){
+  document.getElementById('langGrid').innerHTML = LANGUAGES.map(l=>`
+    <div class="lang-item ${l.code===S.lang?'selected':''}" onclick="selectLang('${l.code}')">
+      <span class="lang-flag">${l.flag}</span><span>${l.name}</span>
+    </div>
+  `).join('');
+}
+function selectLang(code){
+  applyLang(code);
+  renderLangModal();
+  document.getElementById('langModal').classList.remove('open');
+}
+
+// ====== TAB / NAV ======
+function switchTab(tab){
+  ['home','tasks','referral','withdraw'].forEach(x=>{
+    document.getElementById('sec-'+x).classList.remove('active');
+  });
+  document.getElementById('sec-'+tab).classList.add('active');
+
+  ['home','tasks','referral'].forEach(x=>{
+    document.getElementById('nav-'+x).classList.remove('active');
+  });
+  if(tab!=='withdraw') document.getElementById('nav-'+tab).classList.add('active');
+
+  document.getElementById('profileCard').style.display = (tab==='home') ? 'block' : 'none';
+
+  if(tab==='withdraw'){ renderWithdraw(); syncWithdrawalStatuses(); }
+}
+function openWithdraw(){ switchTab('withdraw'); }
+function closeWithdraw(){ switchTab('home'); }
+
+// ====== HOME TICKS ======
+function renderTicks(){
+  document.getElementById('ticksList').innerHTML = HOME_TICKS.map(item=>`
+    <div class="tick-item glass ${S.homeTicks[item.id]?'done':''}">
+      <div class="tick-circle">${S.homeTicks[item.id] ? '<svg class="icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>' : '<svg class="icon" viewBox="0 0 24 24" style="stroke:var(--text3)"><circle cx="12" cy="12" r="9"/></svg>'}</div>
+      <div class="tick-info">
+        <div class="tick-name">${item.name}</div>
+        <div class="tick-reward">+${item.reward} USDT</div>
+      </div>
+      ${S.homeTicks[item.id]
+        ?`<button class="tick-btn done-btn">${t('taskDone')}</button>`
+        :`<button class="tick-btn" onclick="doHomeTick('${item.id}')">${t('taskGo')}</button>`
+      }
+    </div>
+  `).join('');
+}
+function doHomeTick(id){
+  if(S.homeTicks[id]) return;
+  const item=HOME_TICKS.find(x=>x.id===id);
+  if(!item) return;
+  S.homeTicks[id]=true;
+  S.balance=+(S.balance+item.reward).toFixed(2);
+  saveS(); renderUserCard(); renderTicks();
+  showToast(`+${item.reward} USDT 🎉`);
+}
+
+// ====== TASKS (channels/bots, Tasks tab) ======
+function renderTasks(){
+  document.getElementById('tasksList').innerHTML = TASKS_DATA.map(task=>`
+    <div class="tick-item glass ${S.tasks[task.id]?'done':''}">
+      <div class="tick-circle">${S.tasks[task.id] ? '<svg class="icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>' : iconFor(task.type)}</div>
+      <div class="tick-info">
+        <div class="tick-name">${task.name}</div>
+        <div class="tick-reward">+${task.reward} USDT</div>
+      </div>
+      ${S.tasks[task.id]
+        ?`<button class="tick-btn done-btn">${t('taskDone')}</button>`
+        :`<button class="tick-btn" onclick="doTask('${task.id}')">${t('taskGo')}</button>`
+      }
+    </div>
+  `).join('');
+}
+function doTask(id){
+  if(S.tasks[id]) return;
+  const task=TASKS_DATA.find(x=>x.id===id);
+  if(!task) return;
+  if(task.link) window.open(task.link,'_blank');
+  setTimeout(()=>{
+    S.tasks[id]=true;
+    S.balance=+(S.balance+task.reward).toFixed(2);
+    saveS(); renderUserCard(); renderTasks();
+    showToast(`+${task.reward} USDT 🎉`);
+  },1500);
+}
+
+// ====== ADS (Watch & Earn, rolling 24h limit) ======
+function renderAds(){
+  document.getElementById('totalWatched').textContent = S.totalWatched;
+  document.getElementById('totalEarned').textContent = S.totalEarned.toFixed(2)+' USDT';
+  document.getElementById('adCounter').innerHTML = `${S.adsWatched24h} / 20 ${t('in24h')}`;
+  document.getElementById('adProgressFill').style.width = (S.adsWatched24h/20*100)+'%';
+  if(S.adsWatched24h>=20){
+    document.getElementById('adWatchCard').style.display='none';
+    document.getElementById('adsDoneMsg').style.display='block';
+    const hoursLeft = Math.max(0, Math.ceil((24*60*60*1000 - (Date.now()-S.adsWindowStart))/(60*60*1000)));
+    document.getElementById('adsResetText').textContent = `Come back in ~${hoursLeft}h for more USDT`;
+  } else {
+    document.getElementById('adWatchCard').style.display='block';
+    document.getElementById('adsDoneMsg').style.display='none';
+    document.getElementById('adStatus').textContent = t('readyToEarn');
+  }
+}
+
+let adWatching = false;
+let AdController = null;
+
+async function initAdGram() {
+  try {
+    AdController = await window.Adsgram.init({
+      blockId: "38991",
+      debug: false,
+      debugBannerType: "FullscreenMedia",
+    });
+  } catch(e) {
+    console.warn('AdGram init failed:', e);
+    AdController = null;
+  }
+}
+
+function showTapOverlay(text){
+  const ov = document.getElementById('tapOverlay');
+  const txt = document.getElementById('tapText');
+  ov.classList.remove('success');
+  txt.textContent = text;
+  ov.classList.add('show');
+}
+function showTapSuccess(text){
+  const ov = document.getElementById('tapOverlay');
+  const txt = document.getElementById('tapText');
+  ov.classList.add('success');
+  txt.textContent = text;
+  setTimeout(()=>{ ov.classList.remove('show'); }, 900);
+}
+function hideTapOverlay(){
+  document.getElementById('tapOverlay').classList.remove('show','success');
+}
+
+function creditAdWatch(){
+  if(!S.adsWindowStart || Date.now() - S.adsWindowStart >= 24*60*60*1000){
+    S.adsWatched24h = 0;
+    S.adsWindowStart = Date.now();
+  }
+  S.adsWatched24h++;
+  S.totalWatched++;
+  S.balance = +(S.balance + 0.1).toFixed(2);
+  S.totalEarned = +(S.totalEarned + 0.1).toFixed(2);
+  saveS(); renderUserCard(); renderAds();
+  showTapSuccess('+0.1 USDT credited!');
+  showToast('+0.1 USDT 🎉');
+}
+
+function watchAd(e) {
+  if (adWatching || S.adsWatched24h >= 20) return;
+
+  // Ripple effect on tap
+  const card = document.getElementById('adWatchCard');
+  const ripple = document.createElement('div');
+  ripple.className = 'ad-ripple';
+  const rect = card.getBoundingClientRect();
+  const x = (e ? e.clientX - rect.left : rect.width/2);
+  const y = (e ? e.clientY - rect.top : rect.height/2);
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.cssText = `width:${size}px;height:${size}px;left:${x - size/2}px;top:${y - size/2}px`;
+  card.querySelector('.ad-watch-inner').appendChild(ripple);
+  setTimeout(()=>ripple.remove(), 600);
+
+  // Immediate feedback the instant the card is tapped
+  showTapOverlay('Loading ad...');
+
+  if (AdController) {
+    adWatching = true;
+    AdController.show()
+      .then(() => { adWatching = false; creditAdWatch(); })
+      .catch((result) => {
+        adWatching = false;
+        hideTapOverlay();
+        if (result && result.error) console.warn('Ad error:', result.description);
+      });
+    return;
+  }
+
+  adWatching = true;
+  const modal = document.getElementById('adModal');
+  modal.classList.add('open');
+  hideTapOverlay();
+  let sec = 5;
+  document.getElementById('adCountdown').textContent = sec;
+  document.getElementById('adModalFill').style.width = '0%';
+  const iv = setInterval(() => {
+    sec--;
+    document.getElementById('adCountdown').textContent = sec;
+    document.getElementById('adModalFill').style.width = ((5 - sec) / 5 * 100) + '%';
+    if (sec <= 0) {
+      clearInterval(iv);
+      modal.classList.remove('open');
+      adWatching = false;
+      creditAdWatch();
+    }
+  }, 1000);
+}
+
+// ====== REFERRAL ======
+function getInviteLink(uid){ return `https://t.me/USDT_Vault1Bot/usdt?startapp=${uid||'USER_ID'}`; }
+
+function renderInvite(){
+  const link = getInviteLink(S.userId);
+  document.getElementById('inviteLinkText').textContent = link;
+  document.getElementById('friendsCount').textContent = S.friendsCount;
+  document.getElementById('inviteEarned').textContent = S.inviteEarned.toFixed(2)+' USDT';
+}
+function copyInviteLink(){
+  const link = getInviteLink(S.userId);
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(link).catch(()=>fallbackCopy(link));
+  } else { fallbackCopy(link); }
+  showToast(t('copied'));
+}
+function fallbackCopy(text){
+  const el=document.createElement('textarea');
+  el.value=text; document.body.appendChild(el);
+  el.select(); document.execCommand('copy');
+  document.body.removeChild(el);
+}
+function shareInvite(){
+  const link = getInviteLink(S.userId);
+  if(window.Telegram?.WebApp){
+    window.Telegram.WebApp.openTelegramLink(
+      `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Join USDT Vault and earn free USDT!')}`
+    );
+  } else {
+    fallbackCopy(link); showToast(t('copied'));
+  }
+}
+
+// ====== SHARED DATA STORE (Firebase Realtime Database) ======
+const FIREBASE_DB = "https://usdt-reward-default-rtdb.firebaseio.com";
+
+async function getReferralEvents(){
+  try{
+    const res = await fetch(`${FIREBASE_DB}/referrals.json`, { cache:'no-store' });
+    if(!res.ok) return [];
+    const data = await res.json();
+    if(!data) return [];
+    return Object.keys(data).map(key => ({ id: key, ...data[key] }));
+  }catch(e){ console.warn('Referral fetch failed:', e); return []; }
+}
+
+async function pushReferralEvent(referrerId, refereeId){
+  try{
+    const res = await fetch(`${FIREBASE_DB}/referrals.json`, {
+      method:'POST',
+      body: JSON.stringify({ referrerId: String(referrerId), refereeId: String(refereeId), ts: Date.now() })
+    });
+    return res.ok;
+  }catch(e){ console.warn('Referral push failed:', e); return false; }
+}
+
+async function syncReferralCredits(){
+  const events = await getReferralEvents();
+  if(!S.creditedReferralIds) S.creditedReferralIds = [];
+  let credited = false;
+  events.forEach(ev=>{
+    if(ev.referrerId === String(S.userId) && !S.creditedReferralIds.includes(ev.id)){
+      S.friendsCount++;
+      S.balance = +(S.balance + 1).toFixed(2);
+      S.inviteEarned = +(S.inviteEarned + 1).toFixed(2);
+      S.creditedReferralIds.push(ev.id);
+      credited = true;
+    }
+  });
+  if(credited){
+    saveS(); renderUserCard(); renderInvite();
+    showToast('+1.00 USDT 🎉');
+  }
+}
+
+async function syncWithdrawalStatuses(){
+  try{
+    const res = await fetch(`${FIREBASE_DB}/payouts.json?orderBy="userId"&equalTo="${String(S.userId)}"&_=${Date.now()}`, { cache:'no-store' });
+    if(!res.ok) return;
+    const data = await res.json();
+    if(!data) return;
+    let changed = false;
+    Object.values(data).forEach(w=>{
+      const local = S.history.find(h=>h.id === w.id);
+      if(local && local.status !== w.status){
+        if(w.status === 'rejected'){
+          S.balance = +(S.balance + local.amount).toFixed(2);
+          showToast('Withdrawal rejected, refunded ' + local.amount + ' USDT');
+        } else if(w.status === 'completed'){
+          showToast('✅ Withdrawal approved!');
+        }
+        local.status = w.status;
+        changed = true;
+      }
+    });
+    if(changed){ saveS(); renderUserCard(); renderWithdraw(); }
+  }catch(e){ console.warn('Withdrawal status sync failed:', e); }
+}
+
+// ====== WITHDRAW ======
+function renderWithdraw(){
+  document.getElementById('availableBal').textContent=S.balance.toFixed(2);
+  renderHistory();
+}
+function submitWithdraw(){
+  const amt=parseFloat(document.getElementById('withdrawAmount').value);
+  const addr=document.getElementById('withdrawAddress').value.trim();
+  if(!amt||isNaN(amt)){ showToast(t('enterAmount')); return; }
+  if(amt<15){ showToast(t('minAmount')); return; }
+  if(amt>S.balance){ showToast(t('insufficientBalance')); return; }
+  if(!addr){ showToast(t('enterAddress')); return; }
+
+  const entry={
+    id:Date.now(), amount:amt,
+    currency:'USDT',
+    address:addr,
+    date:new Date().toLocaleString(),
+    status:'pending',
+  };
+  S.history.unshift(entry);
+  S.balance=+(S.balance-amt).toFixed(2);
+  saveS();
+  fetch(`${FIREBASE_DB}/payouts/${entry.id}.json`, {
+    method:'PUT',
+    body: JSON.stringify({
+      id: entry.id,
+      userId: String(S.userId),
+      name: S.userName || 'Vault User',
+      amount: entry.amount,
+      currency: entry.currency,
+      address: entry.address,
+      date: entry.date,
+      status: 'pending',
+      ts: entry.id
+    })
+  }).catch(()=>{});
+  document.getElementById('withdrawAmount').value='';
+  document.getElementById('withdrawAddress').value='';
+  renderUserCard(); renderWithdraw();
+
+  const sc=document.getElementById('withdrawSuccess');
+  sc.classList.add('show');
+  document.getElementById('withdrawDetail').innerHTML =
+    `<b>${amt} ${entry.currency}</b><br>📍 ${addr}<br>🕐 ${entry.date}<br>⏳ ${t('withdrawProcessing')}`;
+  setTimeout(()=>sc.classList.remove('show'),6000);
+  showToast(t('withdrawSubmitted'));
+}
+function renderHistory(){
+  const list=document.getElementById('historyList');
+  if(!S.history.length){
+    list.innerHTML=`<div class="empty-history">No withdrawals yet</div>`; return;
+  }
+  list.innerHTML=S.history.map(h=>`
+    <div class="history-item glass">
+      <div>
+        <div class="history-amount">${h.amount} <span style="font-size:12px;color:var(--text2)">${h.currency||'USDT'}</span></div>
+        <div class="history-date">${h.date}</div>
+        <div class="history-address">${h.address}</div>
+      </div>
+      <div class="status-badge ${h.status}">
+        ${h.status==='completed'?'✓ '+t('completed'):h.status==='rejected'?'✕ Rejected':'⏳ '+t('pending')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ====== TOAST ======
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2400);
+}
+
+init();
+</script>
+</body>
+</html>
